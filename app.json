@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name": "hydration-reminder",
+    "name": "Hydrate",
     "slug": "hydration-reminder",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourname.hydrate"
     },
     "android": {
       "adaptiveIcon": {
@@ -16,10 +17,29 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.yourname.hydrate"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "color": "#0E8CE8",
+          "sounds": [
+            "./assets/sounds/drop.wav",
+            "./assets/sounds/chime.wav",
+            "./assets/sounds/bell.wav"
+          ]
+        }
+      ],
+      "expo-router",
+      "expo-font",
+      "expo-splash-screen"
+    ],
+    "scheme": "hydrate"
   }
 }

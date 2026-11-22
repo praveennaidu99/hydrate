@@ -1,8 +1,4 @@
-import { registerRootComponent } from 'expo';
-
-import App from './App';
-
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
-registerRootComponent(App);
+// Must be first: defines the notification-button background task before the app starts.
+import './src/background';
+// Expo Router entry (routes live in src/app).
+import 'expo-router/entry';
