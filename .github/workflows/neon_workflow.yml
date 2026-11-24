@@ -1,0 +1,85 @@
+name: Neon Preview & CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+jobs:
+  # 1. Runs on Pull Requests: spins up a temporary Neon database branch and tests the code
+  test-pr:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create Neon Database Branch
+        uses: neondatabase/create-branch-action@v6
+        id: create-neon-branch
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch_name: preview/pr-${{ github.event.number }}
+          parent_branch: production
+
+      - name: Run Unit Tests
+        env:
+          EXPO_PUBLIC_DATABASE_URL: ${{ steps.create-neon-branch.outputs.db_url_pooled }}
+          DATABASE_URL: ${{ steps.create-neon-branch.outputs.db_url_pooled }}
+        run: npm test
+
+      - name: Verify Expo Build Bundle
+        env:
+          EXPO_NO_TELEMETRY: "1"
+          EXPO_PUBLIC_DATABASE_URL: ${{ steps.create-neon-branch.outputs.db_url_pooled }}
+        run: npm run build
+
+  # 2. Automatically cleans up the Neon database branch when the PR is closed or merged
+  cleanup-neon-branch:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Neon Database Branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch: preview/pr-${{ github.event.number }}
+
+  # 3. Runs on direct pushes to master: tests unit suites and bundle integrity
+  test-master:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Unit Tests
+        run: npm test
+
+      - name: Verify Expo Build Bundle
+        env:
+          EXPO_NO_TELEMETRY: "1"
+        run: npm run build
