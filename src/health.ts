@@ -9,6 +9,7 @@ export interface Stats {
   metDays: number;
   lowDays: number; // below 50% of goal
   streak: number; // consecutive days goal met, ending today (or yesterday)
+  longestStreak: number; // all-time highest streak in history
   missedStreak: number; // consecutive past days below 70%, ending yesterday
   best?: DayRecord;
   level: Level;
@@ -31,6 +32,19 @@ export function computeStats(history: DayRecord[]): Stats {
   let missedStreak = 0;
   for (let i = history.length - 2; i >= 0 && history[i].ml < history[i].goal * 0.7; i--) missedStreak++;
 
+  let longestStreak = 0;
+  let currentRun = 0;
+  for (let i = 0; i < history.length; i++) {
+    if (i === history.length - 1 && !todayMet) break;
+    if (history[i].ml >= history[i].goal) {
+      currentRun++;
+      if (currentRun > longestStreak) longestStreak = currentRun;
+    } else {
+      currentRun = 0;
+    }
+  }
+  longestStreak = Math.max(longestStreak, streak);
+
   const best = done.reduce<DayRecord | undefined>((b, d) => (!b || d.ml > b.ml ? d : b), undefined);
 
   return {
@@ -40,6 +54,7 @@ export function computeStats(history: DayRecord[]): Stats {
     metDays: done.filter((d) => d.ml >= d.goal).length,
     lowDays: done.filter((d) => d.ml < d.goal * 0.5).length,
     streak,
+    longestStreak,
     missedStreak,
     best: best && best.ml > 0 ? best : undefined,
     level: avgPct >= 0.95 ? 'excellent' : avgPct >= 0.75 ? 'good' : avgPct >= 0.5 ? 'fair' : 'poor',

@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -12,7 +12,9 @@ import Animated, {
 import { emitDataChanged, onDataChanged } from '../../events';
 import { computeStats } from '../../health';
 import { hydrationSlots, refreshGoalChecks, scheduleAll, setupNotifications } from '../../notifications';
-import { addIntake, DayRecord, DEFAULT_SETTINGS, HydrationSettings, loadHistory, loadSettings, saveSettings } from '../../storage';
+import { addIntake, DayRecord, DEFAULT_SETTINGS, HydrationSettings, loadDoneLog, loadHistory, loadSettings, saveSettings } from '../../storage';
+import { checkAndUnlockBadges, type BadgeState } from '../../badges';
+import { StreakMilestoneCard } from '../../ui/BadgeGrid';
 import { formatVolume, unitLabel, VolumeUnit } from '../../units';
 import { F, useTheme } from '../../theme';
 import { WeekRings } from '../../ui/Charts';
@@ -33,6 +35,8 @@ export default function Today() {
   const [slosh, setSlosh] = useState(0);
   const [burst, setBurst] = useState(0);
   const [pour, setPour] = useState(0);
+  const [unlockedBadge, setUnlockedBadge] = useState<BadgeState | null>(null);
+  const [showStreakModal, setShowStreakModal] = useState(false);
   const pourTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const pourRef = useRef(0);
 
@@ -65,6 +69,18 @@ export default function Today() {
     }
     await refreshGoalChecks();
     emitDataChanged();
+
+    // Check if new badges or milestones were reached
+    try {
+      const fullHistory = await loadHistory(60);
+      const doneLog = await loadDoneLog(0);
+      const { newBadges } = await checkAndUnlockBadges(fullHistory, doneLog);
+      if (newBadges.length > 0) {
+        setBurst((b) => b + 1);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setUnlockedBadge(newBadges[0]);
+      }
+    } catch {}
   };
 
   // Hold-to-pour: water rises while the finger stays on the orb.
@@ -108,7 +124,7 @@ export default function Today() {
     <Screen
       overline={new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
       title={greeting()}
-      right={stats.streak > 0 ? <StreakChip n={stats.streak} /> : undefined}
+      right={stats.streak > 0 ? <StreakChip n={stats.streak} onPress={() => setShowStreakModal(true)} /> : undefined}
     >
       {/* Hero orb */}
       <Animated.View entering={enter(0)} style={{ alignItems: 'center', paddingTop: 4, paddingBottom: 30 }}>
@@ -165,8 +181,23 @@ export default function Today() {
       )}
 
       {/* Smart alerts */}
-      {(!settings.enabled || alerts.length > 0) && <SectionLabel>For you</SectionLabel>}
+      {(!settings.enabled || alerts.length > 0 || unlockedBadge) && <SectionLabel>For you</SectionLabel>}
       <View style={{ gap: 12 }}>
+        {unlockedBadge && (
+          <Animated.View entering={enter(3)}>
+            <Banner
+              tone="success"
+              icon="trophy"
+              title={`🏆 Unlocked: ${unlockedBadge.title}!`}
+              text={unlockedBadge.description}
+              action="View Badges"
+              onPress={() => {
+                setUnlockedBadge(null);
+                router.navigate('/insights');
+              }}
+            />
+          </Animated.View>
+        )}
         {!settings.enabled && (
           <Animated.View entering={enter(4)}>
             <Banner
@@ -215,13 +246,32 @@ export default function Today() {
           </View>
         </Card>
       </Animated.View>
+
+      {/* Streak Milestone Modal */}
+      <Modal visible={showStreakModal} transparent animationType="fade" onRequestClose={() => setShowStreakModal(false)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 }}
+          onPress={() => setShowStreakModal(false)}
+        >
+          <View style={{ width: '100%', maxWidth: 360 }}>
+            <StreakMilestoneCard
+              currentStreak={stats.streak}
+              longestStreak={stats.longestStreak}
+              onViewAll={() => {
+                setShowStreakModal(false);
+                router.navigate('/insights');
+              }}
+            />
+          </View>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
 
 // ---------------------------------------------------------------- pieces
 
-function StreakChip({ n }: { n: number }) {
+function StreakChip({ n, onPress }: { n: number; onPress?: () => void }) {
   const { colors: c } = useTheme();
   const s = useSharedValue(0.6);
   useEffect(() => {
@@ -229,12 +279,14 @@ function StreakChip({ n }: { n: number }) {
   }, [n, s]);
   const st = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
-    <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.warnSoft, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 }, st]}>
-      <Ionicons name="flame" size={16} color={c.warn} />
-      <Text variant="strong" tone="warn">
-        {n}
-      </Text>
-    </Animated.View>
+    <Pressable onPress={onPress} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Streak ${n} days`}>
+      <Animated.View style={[{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: c.warnSoft, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 }, st]}>
+        <Ionicons name="flame" size={16} color={c.warn} />
+        <Text variant="strong" tone="warn">
+          {n}
+        </Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 

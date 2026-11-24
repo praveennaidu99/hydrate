@@ -18,6 +18,8 @@ import {
 } from '../../health';
 import { Kind, KINDS } from '../../notifications';
 import { DayRecord, DEFAULT_SETTINGS, HydrationSettings, loadDoneLog, loadHistory, loadSettings } from '../../storage';
+import { evaluateBadges, loadUnlockedBadges, type BadgeState } from '../../badges';
+import { BadgeGridSection } from '../../ui/BadgeGrid';
 import { formatVolume } from '../../units';
 import { alpha, Colors, F, useTheme } from '../../theme';
 import { BarChart, ScoreRing } from '../../ui/Charts';
@@ -50,15 +52,24 @@ export default function Insights() {
   const [days, setDays] = useState<DayRecord[]>([]);
   const [done, setDone] = useState<Record<string, number>>({});
   const [settings, setSettings] = useState<HydrationSettings>(DEFAULT_SETTINGS);
+  const [badges, setBadges] = useState<BadgeState[]>([]);
 
   const load = useCallback(() => {
     const n = period === 'week' ? 7 : 30;
-    return Promise.all([loadHistory(n), loadDoneLog(Date.now() - n * 86400000), loadSettings()]).then(([h, log, s]) => {
+    return Promise.all([
+      loadHistory(Math.max(n, 60)),
+      loadDoneLog(0),
+      loadSettings(),
+      loadUnlockedBadges(),
+    ]).then(([fullHistory, allLog, s, unlockedMap]) => {
+      const periodDays = fullHistory.slice(Math.max(0, fullHistory.length - n));
+      const periodLog = allLog.filter((e) => e.at >= Date.now() - n * 86400000);
       const counts: Record<string, number> = {};
-      log.forEach((e) => (counts[e.kind] = (counts[e.kind] ?? 0) + 1));
-      setDays(h);
+      periodLog.forEach((e) => (counts[e.kind] = (counts[e.kind] ?? 0) + 1));
+      setDays(periodDays);
       setDone(counts);
       setSettings(s);
+      setBadges(evaluateBadges(fullHistory, allLog, unlockedMap));
     });
   }, [period]);
 
@@ -152,6 +163,24 @@ export default function Insights() {
             </Text>
           )}
         </Card>
+      </Animated.View>
+
+      {/* Badges & Achievements */}
+      <SectionLabel
+        right={
+          <Text variant="caption" tone="accent" style={{ fontFamily: F.bold }}>
+            {badges.filter((b) => b.unlocked).length}/{badges.length} Unlocked
+          </Text>
+        }
+      >
+        Achievements
+      </SectionLabel>
+      <Animated.View entering={enter(4)}>
+        <BadgeGridSection
+          badges={badges}
+          currentStreak={stats.streak}
+          longestStreak={stats.longestStreak}
+        />
       </Animated.View>
 
       {/* Health knowledge */}
