@@ -14,6 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, LinearGradient, Path, Stop } from 'react-native-svg';
+import { mlToOz, VolumeUnit } from '../units';
 import { F, useTheme } from '../theme';
 import { AnimatedNumber } from './AnimatedNumber';
 import { Text } from './primitives';
@@ -42,13 +43,14 @@ interface Props {
   /** Increment to make the water slosh (e.g. after adding a drink). */
   sloshKey: number;
   size?: number;
+  unit?: VolumeUnit;
 }
 
 /**
  * The hero: a liquid orb with a two-layer sine wave, a gradient progress ring,
  * device-tilt physics and a count-up number.
  */
-export function LiquidOrb({ ml, goal, sloshKey, size = 268 }: Props) {
+export function LiquidOrb({ ml, goal, sloshKey, size = 268, unit = 'ml' }: Props) {
   const { colors: c, isDark } = useTheme();
   const reduceMotion = useReducedMotion();
 
@@ -181,12 +183,12 @@ export function LiquidOrb({ ml, goal, sloshKey, size = 268 }: Props) {
         {/* Center label */}
         <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]} pointerEvents="none">
           <AnimatedNumber
-            value={ml}
+            value={unit === 'oz' ? Math.round(mlToOz(ml)) : ml}
             style={{ fontFamily: F.extrabold, fontSize: 50, letterSpacing: -2, textAlign: 'center', minWidth: 160 }}
             animatedStyle={textColor}
           />
           <Animated.Text style={[{ fontFamily: F.semibold, fontSize: 14, marginTop: -2 }, subColor]}>
-            of {goal.toLocaleString()} ml · {Math.round(pct * 100)}%
+            of {unit === 'oz' ? `${Math.round(mlToOz(goal))} fl oz` : `${goal.toLocaleString()} ml`} · {Math.round(pct * 100)}%
           </Animated.Text>
         </View>
       </View>

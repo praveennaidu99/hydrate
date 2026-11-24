@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { VolumeUnit } from './units';
 
-export type SoundName = 'default' | 'drop' | 'chime' | 'bell';
+export type { VolumeUnit };
+export type SoundName = 'default' | 'drop' | 'bubble' | 'chime' | 'crystal' | 'bell' | 'stream';
 export type ThemeMode = 'system' | 'light' | 'dark';
 
 export interface HydrationSettings {
@@ -12,6 +14,10 @@ export interface HydrationSettings {
   warnings: boolean; // "behind on water" alerts
   reviews: boolean; // weekly + monthly review notifications
   waterSound: SoundName;
+  unit: VolumeUnit;
+  quickAmounts: [number, number, number]; // in ml
+  smartPacing: boolean; // calculate medical pacing portion per alert
+  taperBeforeBed: boolean; // taper large doses before sleep
 }
 
 export const DEFAULT_SETTINGS: HydrationSettings = {
@@ -23,6 +29,10 @@ export const DEFAULT_SETTINGS: HydrationSettings = {
   warnings: true,
   reviews: true,
   waterSound: 'drop',
+  unit: 'ml',
+  quickAmounts: [150, 250, 500],
+  smartPacing: true,
+  taperBeforeBed: true,
 };
 
 const SETTINGS_KEY = 'hydration-settings';
@@ -36,7 +46,19 @@ const PROCESSED_KEY = 'processed-responses';
 export async function loadSettings(): Promise<HydrationSettings> {
   try {
     const raw = await AsyncStorage.getItem(SETTINGS_KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+    if (!raw) return DEFAULT_SETTINGS;
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      unit: parsed.unit === 'oz' ? 'oz' : 'ml',
+      smartPacing: parsed.smartPacing ?? DEFAULT_SETTINGS.smartPacing,
+      taperBeforeBed: parsed.taperBeforeBed ?? DEFAULT_SETTINGS.taperBeforeBed,
+      quickAmounts:
+        Array.isArray(parsed.quickAmounts) && parsed.quickAmounts.length === 3
+          ? parsed.quickAmounts
+          : DEFAULT_SETTINGS.quickAmounts,
+    };
   } catch {
     return DEFAULT_SETTINGS;
   }

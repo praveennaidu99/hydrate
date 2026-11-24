@@ -1,14 +1,15 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { emitDataChanged } from './events';
+import { formatVolume } from './units';
 import {
   addIntake,
-  HydrationSettings,
+  type HydrationSettings,
   loadSettings,
   loadToday,
   logDone,
   markProcessed,
-  SoundName,
+  type SoundName,
 } from './storage';
 
 // Identifier prefixes: every scheduled notification belongs to exactly one group.
@@ -30,9 +31,12 @@ const DRINK_ML = 250;
 
 export const SOUNDS: { value: SoundName; label: string }[] = [
   { value: 'default', label: '🔔 Default' },
-  { value: 'drop', label: '💧 Drop' },
+  { value: 'drop', label: '💧 Water Drop' },
+  { value: 'bubble', label: '🫧 Bubbles' },
   { value: 'chime', label: '🎐 Chime' },
+  { value: 'crystal', label: '✨ Crystal' },
   { value: 'bell', label: '🛎️ Bell' },
+  { value: 'stream', label: '🌊 Stream' },
 ];
 
 // Android sounds are fixed per channel, so each sound gets its own channel.
@@ -142,6 +146,17 @@ export function hydrationSlots(s: HydrationSettings): { hour: number; minute: nu
   return slots;
 }
 
+/**
+ * Calculates recommended portion per alert based on total goal and number of reminder slots.
+ * Uses clinical pacing: bounds portions between 50 ml and 750 ml, rounded to nearest 10 ml.
+ */
+export function calculatePacedDose(goalMl: number, totalSlots: number): number {
+  if (totalSlots <= 0) return 250;
+  const raw = goalMl / totalSlots;
+  const rounded = Math.round(raw / 10) * 10;
+  return Math.max(50, Math.min(750, rounded));
+}
+
 const HYDRATION_MESSAGES = [
   'Time for a glass of water 💧',
   'Stay hydrated! Take a few sips 🚰',
@@ -154,12 +169,35 @@ async function scheduleHydration(s: HydrationSettings) {
   await cancelByPrefix(P.hydration);
   if (!s.enabled) return 0;
   const slots = hydrationSlots(s);
+  const totalSlots = slots.length;
+  const baseDose = s.smartPacing ? calculatePacedDose(s.goalMl, totalSlots) : DRINK_ML;
+
   await Promise.all(
-    slots.map((slot, i) =>
-      Notifications.scheduleNotificationAsync({
+    slots.map((slot, i) => {
+      let title = 'Drink water';
+      let body = HYDRATION_MESSAGES[i % HYDRATION_MESSAGES.length];
+      let dose = baseDose;
+
+      if (s.smartPacing) {
+        if (i === 0) {
+          dose = Math.round((baseDose * 1.25) / 10) * 10;
+          title = `💧 Morning Hydration · 1 of ${totalSlots}`;
+          body = `Kickstart your day with ~${formatVolume(dose, s.unit)}. Rehydrate after sleep!`;
+        } else if (i === totalSlots - 1 && s.taperBeforeBed) {
+          dose = Math.round((baseDose * 0.6) / 10) * 10;
+          title = `🌙 Evening Sip · Last dose today`;
+          body = `Light sip (~${formatVolume(dose, s.unit)}) to wind down without disrupting your sleep.`;
+        } else {
+          title = `💧 Water Dose · ${i + 1} of ${totalSlots}`;
+          body = `Time for ~${formatVolume(dose, s.unit)}. Stay on track for your ${formatVolume(s.goalMl, s.unit, { compact: true })} goal.`;
+        }
+      }
+
+      return Notifications.scheduleNotificationAsync({
         identifier: `${P.hydration}${slot.hour}-${slot.minute}`,
-        content: content('Drink water', HYDRATION_MESSAGES[i % HYDRATION_MESSAGES.length], s.waterSound, 'water', {
+        content: content(title, body, s.waterSound, 'water', {
           kind: 'water',
+          pacedMl: dose,
         }),
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -167,8 +205,8 @@ async function scheduleHydration(s: HydrationSettings) {
           minute: slot.minute,
           channelId: channelFor(s.waterSound),
         },
-      }),
-    ),
+      });
+    }),
   );
   return slots.length;
 }
@@ -368,10 +406,12 @@ export async function handleResponse(resp: Notifications.NotificationResponse): 
   if (!(await markProcessed(key))) return;
 
   switch (resp.actionIdentifier) {
-    case 'drink':
-      await addIntake(DRINK_ML);
+    case 'drink': {
+      const intakeToAdd = typeof data.pacedMl === 'number' && data.pacedMl > 0 ? Number(data.pacedMl) : DRINK_ML;
+      await addIntake(intakeToAdd);
       await refreshGoalChecks();
       break;
+    }
     case 'done':
       await logDone(String(data.kind ?? 'custom'));
       break;

@@ -19,7 +19,8 @@ export function computeStats(history: DayRecord[]): Stats {
   const today = history[history.length - 1];
   const todayMet = !!today && today.ml >= today.goal;
   // Count today only once its goal is met, so a half-finished day doesn't drag the average down.
-  const done = todayMet ? history : history.slice(0, -1);
+  // If today is the only recorded day, use it so day-one progress is still tracked.
+  const done = todayMet || history.length <= 1 ? history : history.slice(0, -1);
   const n = done.length;
   const avgMl = n ? Math.round(done.reduce((s, d) => s + d.ml, 0) / n) : 0;
   const avgPct = n ? done.reduce((s, d) => s + Math.min(1.2, d.ml / d.goal), 0) / n : 0;
@@ -123,6 +124,16 @@ export const TIPS = [
   'Add lemon, mint or fruit slices if plain water feels boring.',
   'Tap "Drank 250 ml ✅" right on the reminder so logging takes one second.',
 ];
+
+export const CLINICAL_PACING_GUIDELINES = {
+  maxHourlyExcretionMl: 1000, // kidneys excrete max ~800-1000 ml/hr
+  recommendedPerDoseMl: { min: 150, max: 450 },
+  highIntakeThresholdMl: 4000,
+  highGoalNotice:
+    'Goals of 4.0 L to 5.0 L require disciplined pacing throughout the day. Drink no more than 800 ml in a single hour to protect your kidney filtration and electrolyte balance.',
+  nightTaperNotice:
+    'Tapering water intake 1 to 2 hours before bed preserves deep sleep cycles by reducing nocturia (nighttime bathroom trips).',
+};
 
 export const DISCLAIMER =
   'This is general wellness information, not medical advice. If you have heart, kidney or other conditions, follow the fluid guidance from your doctor.';

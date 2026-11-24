@@ -17,7 +17,8 @@ import {
   WARNING_SIGNS,
 } from '../../health';
 import { Kind, KINDS } from '../../notifications';
-import { DayRecord, loadDoneLog, loadHistory } from '../../storage';
+import { DayRecord, DEFAULT_SETTINGS, HydrationSettings, loadDoneLog, loadHistory, loadSettings } from '../../storage';
+import { formatVolume } from '../../units';
 import { alpha, Colors, F, useTheme } from '../../theme';
 import { BarChart, ScoreRing } from '../../ui/Charts';
 import { IconName, KIND_UI } from '../../ui/kinds';
@@ -44,24 +45,20 @@ const levelColors = (l: Level, c: Colors): { fg: string; bg: string; ring: [stri
 export default function Insights() {
   const { colors: c } = useTheme();
   const params = useLocalSearchParams<{ period?: string }>();
-  const [period, setPeriod] = useState<Period>(params.period === 'month' ? 'month' : 'week');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('week');
+  const period: Period = params.period === 'month' || params.period === 'week' ? params.period : selectedPeriod;
   const [days, setDays] = useState<DayRecord[]>([]);
   const [done, setDone] = useState<Record<string, number>>({});
-
-  // A review notification can deep-link here with ?period=week|month.
-  const [lastParam, setLastParam] = useState(params.period);
-  if (params.period !== lastParam) {
-    setLastParam(params.period);
-    if (params.period === 'week' || params.period === 'month') setPeriod(params.period);
-  }
+  const [settings, setSettings] = useState<HydrationSettings>(DEFAULT_SETTINGS);
 
   const load = useCallback(() => {
     const n = period === 'week' ? 7 : 30;
-    return Promise.all([loadHistory(n), loadDoneLog(Date.now() - n * 86400000)]).then(([h, log]) => {
+    return Promise.all([loadHistory(n), loadDoneLog(Date.now() - n * 86400000), loadSettings()]).then(([h, log, s]) => {
       const counts: Record<string, number> = {};
       log.forEach((e) => (counts[e.kind] = (counts[e.kind] ?? 0) + 1));
       setDays(h);
       setDone(counts);
+      setSettings(s);
     });
   }, [period]);
 
@@ -83,7 +80,7 @@ export default function Insights() {
       <Animated.View entering={enter(0)}>
         <Segmented<Period>
           value={period}
-          onChange={setPeriod}
+          onChange={setSelectedPeriod}
           options={[
             { label: 'This week', value: 'week' },
             { label: 'This month', value: 'month' },
@@ -128,13 +125,13 @@ export default function Insights() {
 
       {/* Stats */}
       <Animated.View entering={enter(2)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
-        <Stat icon="water" color={c.accent} value={`${(stats.avgMl / 1000).toFixed(2)} L`} label="Daily average" />
+        <Stat icon="water" color={c.accent} value={formatVolume(stats.avgMl, settings.unit, { compact: true })} label="Daily average" />
         <Stat icon="checkmark-done" color={c.success} value={`${stats.metDays}/${Math.max(stats.trackedDays, 1)}`} label="Goal days" />
         <Stat icon="flame" color={c.warn} value={`${stats.streak} ${stats.streak === 1 ? 'day' : 'days'}`} label="Current streak" />
         <Stat
           icon="trophy"
           color="#8B5CF6"
-          value={stats.best ? `${(stats.best.ml / 1000).toFixed(1)} L` : '—'}
+          value={stats.best ? formatVolume(stats.best.ml, settings.unit, { compact: true }) : '—'}
           label={stats.best ? `Best · ${stats.best.date.toLocaleDateString(undefined, { weekday: 'short' })}` : 'Best day'}
         />
       </Animated.View>

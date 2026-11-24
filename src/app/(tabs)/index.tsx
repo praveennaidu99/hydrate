@@ -13,6 +13,7 @@ import { emitDataChanged, onDataChanged } from '../../events';
 import { computeStats } from '../../health';
 import { hydrationSlots, refreshGoalChecks, scheduleAll, setupNotifications } from '../../notifications';
 import { addIntake, DayRecord, DEFAULT_SETTINGS, HydrationSettings, loadHistory, loadSettings, saveSettings } from '../../storage';
+import { formatVolume, unitLabel, VolumeUnit } from '../../units';
 import { F, useTheme } from '../../theme';
 import { WeekRings } from '../../ui/Charts';
 import { Confetti } from '../../ui/Confetti';
@@ -117,37 +118,37 @@ export default function Today() {
           onPressOut={stopPour}
           onPress={() => setSlosh((k) => k + 1)}
           accessibilityRole="adjustable"
-          accessibilityLabel={`Water today ${today.ml} of ${goal} millilitres. Hold to pour more.`}
+          accessibilityLabel={`Water today ${formatVolume(today.ml, settings.unit)} of ${formatVolume(goal, settings.unit)}. Hold to pour more.`}
         >
-          <LiquidOrb ml={shownMl} goal={goal} sloshKey={slosh} />
+          <LiquidOrb ml={shownMl} goal={goal} sloshKey={slosh} unit={settings.unit} />
         </Pressable>
         <Confetti burstKey={burst} />
-        {pour > 0 && <PourBadge ml={pour} />}
+        {pour > 0 && <PourBadge ml={pour} unit={settings.unit} />}
       </Animated.View>
 
       {/* Status line */}
       <Animated.View entering={enter(1)} style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <InfoPill icon="flag-outline" text={today.ml >= goal ? 'Goal reached' : `${(goal - today.ml).toLocaleString()} ml to go`} />
+        <InfoPill icon="flag-outline" text={today.ml >= goal ? 'Goal reached' : `${formatVolume(goal - today.ml, settings.unit)} to go`} />
         {settings.enabled && nextAt && <InfoPill icon="notifications-outline" text={`Next ${nextAt}`} />}
       </Animated.View>
 
       {/* Quick add */}
       <Animated.View entering={enter(2)} style={{ flexDirection: 'row', gap: 10, marginTop: 22 }}>
         {[
-          { ml: 150, label: 'Sip', icon: 'cafe-outline' as IconName },
-          { ml: 250, label: 'Glass', icon: 'water-outline' as IconName },
-          { ml: 500, label: 'Bottle', icon: 'flask-outline' as IconName },
+          { ml: settings.quickAmounts[0], label: 'Sip', icon: 'cafe-outline' as IconName },
+          { ml: settings.quickAmounts[1], label: 'Glass', icon: 'water-outline' as IconName },
+          { ml: settings.quickAmounts[2], label: 'Bottle', icon: 'flask-outline' as IconName },
         ].map((b) => (
-          <PressableScale key={b.ml} onPress={() => add(b.ml)} style={{ flex: 1 }} accessibilityLabel={`Add ${b.ml} millilitres`}>
+          <PressableScale key={b.label} onPress={() => add(b.ml)} style={{ flex: 1 }} accessibilityLabel={`Add ${formatVolume(b.ml, settings.unit)}`}>
             <Card style={{ alignItems: 'center', paddingVertical: 16, paddingHorizontal: 8 }}>
               <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name={b.icon} size={21} color={c.accent} />
               </View>
               <Text variant="headline" style={{ marginTop: 10 }}>
-                +{b.ml}
+                +{formatVolume(b.ml, settings.unit, { includeUnit: false })}
               </Text>
               <Text variant="caption" tone="faint">
-                {b.label} · ml
+                {b.label} · {unitLabel(settings.unit)}
               </Text>
             </Card>
           </PressableScale>
@@ -155,9 +156,9 @@ export default function Today() {
       </Animated.View>
       {today.ml > 0 && (
         <Animated.View entering={enter(3)} style={{ alignItems: 'center', marginTop: 12 }}>
-          <Pressable onPress={() => add(-250)} hitSlop={10} accessibilityRole="button">
+          <Pressable onPress={() => add(-(settings.quickAmounts[1] || 250))} hitSlop={10} accessibilityRole="button">
             <Text variant="caption" tone="faint" style={{ fontFamily: F.bold }}>
-              <Ionicons name="arrow-undo" size={12} /> Undo 250 ml
+              <Ionicons name="arrow-undo" size={12} /> Undo {formatVolume(settings.quickAmounts[1] || 250, settings.unit)}
             </Text>
           </Pressable>
         </Animated.View>
@@ -208,7 +209,7 @@ export default function Today() {
         <Card>
           <WeekRings days={week} />
           <View style={{ flexDirection: 'row', marginTop: 16, gap: 10 }}>
-            <MiniStat label="Daily avg" value={`${(stats.avgMl / 1000).toFixed(1)} L`} />
+            <MiniStat label="Daily avg" value={formatVolume(stats.avgMl, settings.unit, { compact: true })} />
             <MiniStat label="Goals hit" value={`${stats.metDays}/${Math.max(stats.trackedDays, 1)}`} />
             <MiniStat label="Streak" value={`${stats.streak}d`} />
           </View>
@@ -237,12 +238,12 @@ function StreakChip({ n }: { n: number }) {
   );
 }
 
-function PourBadge({ ml }: { ml: number }) {
+function PourBadge({ ml, unit }: { ml: number; unit: VolumeUnit }) {
   const { colors: c } = useTheme();
   return (
     <View style={{ position: 'absolute', top: -6, backgroundColor: c.accent, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999 }}>
       <Text variant="strong" tone="onAccent">
-        Pouring +{ml} ml
+        Pouring +{formatVolume(ml, unit)}
       </Text>
     </View>
   );
@@ -306,18 +307,18 @@ function buildAlerts(ml: number, goal: number, st: HydrationSettings, missedStre
     out.push({
       tone: 'danger',
       icon: 'alert-circle',
-      title: `Missed today's goal by ${(goal - ml).toLocaleString()} ml`,
+      title: `Missed today's goal by ${formatVolume(goal - ml, st.unit)}`,
       text: 'Start tomorrow with a big glass of water right after waking up.',
       insights: true,
     });
   } else if (mins > start) {
     const expected = Math.round((goal * (mins - start)) / Math.max(1, end - start));
-    if (ml < expected - 250) {
+    if (ml < expected - (st.quickAmounts[1] || 250)) {
       out.push({
         tone: 'warn',
         icon: 'time',
-        title: `You're ${(expected - ml).toLocaleString()} ml behind`,
-        text: `By now you'd ideally be near ${expected.toLocaleString()} ml. A glass now gets you back on pace.`,
+        title: `You're ${formatVolume(expected - ml, st.unit)} behind`,
+        text: `By now you'd ideally be near ${formatVolume(expected, st.unit)}. A glass now gets you back on pace.`,
       });
     } else {
       out.push({ tone: 'info', icon: 'thumbs-up', title: 'Right on pace', text: 'You are keeping up with your goal. Nice rhythm!' });

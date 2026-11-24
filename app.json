@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.hydrate"
+      "bundleIdentifier": "com.praveeng.hydrate"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.yourname.hydrate"
+      "package": "com.praveeng.hydrate"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,8 +31,11 @@
           "color": "#0E8CE8",
           "sounds": [
             "./assets/sounds/drop.wav",
+            "./assets/sounds/bubble.wav",
             "./assets/sounds/chime.wav",
-            "./assets/sounds/bell.wav"
+            "./assets/sounds/crystal.wav",
+            "./assets/sounds/bell.wav",
+            "./assets/sounds/stream.wav"
           ]
         }
       ],
