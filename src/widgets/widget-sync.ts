@@ -1,5 +1,6 @@
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NativeModules, Platform } from 'react-native';
 import { addIntake, type DayRecord, loadSettings, loadToday } from '../storage';
 import { formatVolume, type VolumeUnit } from '../units';
 import { emitDataChanged } from '../events';
@@ -48,6 +49,14 @@ export async function syncWidgetData(
   };
 
   await AsyncStorage.setItem(WIDGET_DATA_KEY, JSON.stringify(snapshot));
+
+  // Sync to native Android AppWidget
+  if (Platform.OS === 'android' && NativeModules?.HydrationWidgetModule) {
+    try {
+      NativeModules.HydrationWidgetModule.updateWidget(today.ml, settings.goalMl, unit);
+    } catch {}
+  }
+
   return snapshot;
 }
 

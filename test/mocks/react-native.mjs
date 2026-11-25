@@ -6,3 +6,9 @@ export const Platform = {
 export const AppState = {
   addEventListener: () => ({ remove: () => {} }),
 };
+
+export const NativeModules = {
+  HydrationWidgetModule: {
+    updateWidget: () => {},
+  },
+};

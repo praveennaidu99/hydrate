@@ -9,6 +9,7 @@ import { CLINICAL_PACING_GUIDELINES } from '../../health';
 import { DEFAULT_SETTINGS, HydrationSettings, loadSettings, saveSettings, SoundName, ThemeMode } from '../../storage';
 import { formatVolume, VolumeUnit } from '../../units';
 import { getNeonUrl, pushToNeon, setNeonUrl, testNeonConnection } from '../../backend/neon-sync';
+import { syncWidgetData } from '../../widgets/widget-sync';
 import { F, useTheme } from '../../theme';
 import type { IconName } from '../../ui/kinds';
 import { Card, IconTile, Pills, Segmented, SectionLabel, Stepper, Text, Toggle } from '../../ui/primitives';
@@ -266,6 +267,108 @@ export default function Settings() {
               <Row icon="stats-chart" color="#8B5CF6" title="Weekly & monthly reviews" sub="Sundays 7 PM · 1st of the month">
                 <Toggle label="Reviews" value={s.reviews} onChange={(v) => update({ reviews: v })} />
               </Row>
+            </Card>
+          </Animated.View>
+
+          {/* Home Screen Widget Section */}
+          <SectionLabel>Home Screen Widget</SectionLabel>
+          <Animated.View entering={enter(3)}>
+            <Card style={{ padding: 18 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <IconTile icon="apps" color={c.accent} size={38} />
+                <View style={{ flex: 1 }}>
+                  <Text variant="strong">One-Tap Quick Logging</Text>
+                  <Text variant="caption" tone="soft">
+                    Track hydration directly from your phone&apos;s home screen
+                  </Text>
+                </View>
+              </View>
+
+              {/* Live Visual Widget Preview */}
+              <View
+                style={{
+                  backgroundColor: c.surfaceAlt,
+                  borderRadius: 16,
+                  padding: 14,
+                  marginTop: 14,
+                  borderWidth: 1,
+                  borderColor: c.line,
+                }}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="water" size={16} color={c.accent} />
+                    <Text variant="strong">Hydrate Widget</Text>
+                  </View>
+                  <Text variant="caption" style={{ color: c.accent, fontFamily: F.bold }}>
+                    Interactive Preview
+                  </Text>
+                </View>
+
+                <View style={{ marginTop: 10 }}>
+                  <View style={{ height: 8, borderRadius: 999, backgroundColor: c.line, overflow: 'hidden' }}>
+                    <View style={{ height: '100%', width: '60%', backgroundColor: c.accent, borderRadius: 999 }} />
+                  </View>
+                  <Text variant="caption" tone="faint" style={{ marginTop: 6 }}>
+                    Target: {formatVolume(s.goalMl, s.unit)} daily
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                  <View style={{ flex: 1, backgroundColor: c.surface, paddingVertical: 8, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: c.line }}>
+                    <Text variant="caption" tone="accent" style={{ fontFamily: F.bold }}>
+                      +{formatVolume(s.quickAmounts[0], s.unit)}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: c.surface, paddingVertical: 8, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: c.line }}>
+                    <Text variant="caption" tone="accent" style={{ fontFamily: F.bold }}>
+                      +{formatVolume(s.quickAmounts[1], s.unit)}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: c.surface, paddingVertical: 8, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: c.line }}>
+                    <Text variant="caption" tone="accent" style={{ fontFamily: F.bold }}>
+                      +{formatVolume(s.quickAmounts[2], s.unit)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Instructions */}
+              <View style={{ marginTop: 14, gap: 4 }}>
+                <Text variant="caption" style={{ fontFamily: F.bold }}>
+                  📱 How to add to your Android Home Screen:
+                </Text>
+                <Text variant="caption" tone="soft">
+                  1. Go to your phone&apos;s Home Screen
+                </Text>
+                <Text variant="caption" tone="soft">
+                  2. Touch &amp; hold (long-press) any empty space
+                </Text>
+                <Text variant="caption" tone="soft">
+                  3. Tap <Text variant="caption" style={{ fontFamily: F.bold }}>Widgets</Text> and scroll down to <Text variant="caption" style={{ fontFamily: F.bold }}>Hydrate</Text>
+                </Text>
+                <Text variant="caption" tone="soft">
+                  4. Drag the widget and place it on your screen!
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={async () => {
+                  await syncWidgetData();
+                  Alert.alert('Widget Synced', 'Live widget data refreshed successfully!');
+                }}
+                style={{
+                  backgroundColor: c.accentSoft,
+                  borderRadius: 12,
+                  paddingVertical: 10,
+                  alignItems: 'center',
+                  marginTop: 14,
+                }}
+              >
+                <Text variant="strong" tone="accent">
+                  Sync &amp; Test Widget Data ⚡
+                </Text>
+              </Pressable>
             </Card>
           </Animated.View>
 
