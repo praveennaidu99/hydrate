@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import Constants from 'expo-constants';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -8,7 +7,7 @@ import { calculatePacedDose, hydrationSlots, scheduleAll, scheduledCount, sendTe
 import { CLINICAL_PACING_GUIDELINES } from '../../health';
 import { DEFAULT_SETTINGS, HydrationSettings, loadSettings, saveSettings, SoundName, ThemeMode } from '../../storage';
 import { formatVolume, VolumeUnit } from '../../units';
-import { getNeonUrl, pushToNeon, setNeonUrl, testNeonConnection } from '../../backend/neon-sync';
+import { getLastSyncTime, pushToNeon, testNeonConnection } from '../../backend/neon-sync';
 import { syncWidgetData } from '../../widgets/widget-sync';
 import { F, useTheme } from '../../theme';
 import type { IconName } from '../../ui/kinds';
@@ -23,8 +22,8 @@ export default function Settings() {
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(0);
-  const [neonUrl, setNeonUrlState] = useState('');
   const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<number | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -33,22 +32,22 @@ export default function Settings() {
       setLoaded(true);
     });
     scheduledCount().then(setPending);
-    getNeonUrl().then((url) => setNeonUrlState(url ?? ''));
+    getLastSyncTime().then(setLastSync);
   }, []);
 
   const handleTestAndSaveNeon = async () => {
-    if (!neonUrl.trim()) {
-      await setNeonUrl(null);
-      setNeonUrlState('');
-      Alert.alert('Cloud Sync Disabled', 'App is now running in 100% offline local mode ($0 cost).');
-      return;
-    }
-    const res = await testNeonConnection(neonUrl);
-    if (res.ok) {
-      await setNeonUrl(neonUrl);
-      Alert.alert('Connection Successful', 'Connected to your free Neon Postgres database!');
-    } else {
-      Alert.alert('Connection Failed', res.message);
+    setSyncing(true);
+    try {
+      const res = await testNeonConnection();
+      if (res.ok) {
+        Alert.alert('Connection Successful 🟢', 'Connected to your Neon Postgres database (Hydrate: plain-math-49378436)!');
+      } else {
+        Alert.alert('Connection Notice', res.message);
+      }
+    } catch (err) {
+      Alert.alert('Connection Error', (err as Error).message);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -57,9 +56,10 @@ export default function Settings() {
     try {
       const res = await pushToNeon();
       if (res.success) {
-        Alert.alert('Backup Complete', `Successfully backed up ${res.pushedDays} days to Neon Postgres.`);
+        setLastSync(Date.now());
+        Alert.alert('Backup Complete ☁️', `Successfully backed up ${res.pushedDays} days of intake data to Neon Postgres.`);
       } else {
-        Alert.alert('Sync Notice', 'Please configure your Neon database URL first.');
+        Alert.alert('Sync Notice', 'Please verify your database connection.');
       }
     } catch (err) {
       Alert.alert('Sync Error', (err as Error).message);
@@ -387,22 +387,25 @@ export default function Settings() {
           </Animated.View>
 
           {/* Free Cloud Backup & Sync */}
-          <SectionLabel>Cloud backup & sync (Free Tier)</SectionLabel>
+          <SectionLabel>Cloud backup &amp; sync (Free Tier)</SectionLabel>
           <Animated.View entering={enter(5)}>
             <Card style={{ padding: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <IconTile icon="cloud-done" color={neonUrl ? c.success : c.inkFaint} size={36} />
+                <IconTile icon="cloud-done" color={c.success} size={36} />
                 <View style={{ flex: 1 }}>
-                  <Text variant="strong">Serverless Postgres Backup</Text>
+                  <Text variant="strong">Neon Serverless Postgres</Text>
                   <Text variant="caption" tone="faint">
-                    {neonUrl ? 'Connected to Neon Free Tier ($0/mo)' : 'Offline Local Storage ($0/mo)'}
+                    {lastSync
+                      ? `Last synced: ${new Date(lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                      : 'Database: Hydrate (plain-math-49378436)'}
                   </Text>
                 </View>
               </View>
 
-              <View style={{ marginTop: 14 }}>
+              <View style={{ marginTop: 14, gap: 8 }}>
                 <Pressable
                   onPress={handleTestAndSaveNeon}
+                  disabled={syncing}
                   style={{
                     backgroundColor: c.accentSoft,
                     borderRadius: 12,
@@ -411,33 +414,32 @@ export default function Settings() {
                   }}
                 >
                   <Text variant="strong" tone="accent">
-                    {neonUrl ? 'Manage Connection' : 'Connect Free Neon Database'}
+                    {syncing ? 'Connecting…' : 'Test Database Connection ⚡'}
                   </Text>
                 </Pressable>
 
-                {neonUrl ? (
-                  <Pressable
-                    onPress={handleManualSync}
-                    disabled={syncing}
-                    style={{
-                      backgroundColor: c.surfaceAlt,
-                      borderRadius: 12,
-                      paddingVertical: 10,
-                      alignItems: 'center',
-                      marginTop: 8,
-                    }}
-                  >
-                    <Text variant="caption" tone="soft" style={{ fontFamily: F.bold }}>
-                      {syncing ? 'Backing up…' : 'Sync Now 🔄'}
-                    </Text>
-                  </Pressable>
-                ) : null}
+                <Pressable
+                  onPress={handleManualSync}
+                  disabled={syncing}
+                  style={{
+                    backgroundColor: c.surfaceAlt,
+                    borderRadius: 12,
+                    paddingVertical: 10,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: c.line,
+                  }}
+                >
+                  <Text variant="strong" tone="soft">
+                    {syncing ? 'Backing up…' : 'Backup &amp; Sync to Neon ☁️'}
+                  </Text>
+                </Pressable>
               </View>
             </Card>
           </Animated.View>
 
           <Text variant="caption" tone="faint" style={{ textAlign: 'center', marginTop: 28 }}>
-            Hydrate {Constants.expoConfig?.version ?? ''} · {pending} notifications scheduled
+            Hydrate v1.1.0 (Build 2) · {pending} notifications scheduled
           </Text>
         </>
       )}
