@@ -55,6 +55,8 @@ function AppShell() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="new-reminder" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="quick-add" options={{ animation: 'fade' }} />
+        <Stack.Screen name="+not-found" />
       </Stack>
     </>
   );

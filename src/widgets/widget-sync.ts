@@ -60,6 +60,9 @@ export async function syncWidgetData(
   return snapshot;
 }
 
+let lastProcessedTime = 0;
+let lastProcessedUrl = '';
+
 /**
  * Handles widget tap deep links (e.g. `hydrate://quick-add?ml=250`).
  * Returns true if the URL was a widget quick-add action.
@@ -69,6 +72,14 @@ export async function handleWidgetUrl(url: string | null): Promise<boolean> {
   try {
     const parsed = Linking.parse(url);
     if (parsed.scheme === 'hydrate' && (parsed.hostname === 'quick-add' || parsed.path === 'quick-add')) {
+      const now = Date.now();
+      // Deduplicate rapid dual-invocations within 1.5 seconds
+      if (url === lastProcessedUrl && now - lastProcessedTime < 1500) {
+        return true;
+      }
+      lastProcessedTime = now;
+      lastProcessedUrl = url;
+
       const mlParam = parsed.queryParams?.ml;
       const ml = typeof mlParam === 'string' ? Number(mlParam) : 250;
       if (ml > 0 && !isNaN(ml)) {

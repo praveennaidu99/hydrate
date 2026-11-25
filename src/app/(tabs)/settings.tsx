@@ -439,7 +439,7 @@ export default function Settings() {
           </Animated.View>
 
           <Text variant="caption" tone="faint" style={{ textAlign: 'center', marginTop: 28 }}>
-            Hydrate v1.1.0 (Build 2) · {pending} notifications scheduled
+            Hydrate v1.1.1 (Build 3) · {pending} notifications scheduled
           </Text>
         </>
       )}
