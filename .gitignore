@@ -42,3 +42,4 @@ scratch/
 /ios
 /android
 .neon
+*.apk
