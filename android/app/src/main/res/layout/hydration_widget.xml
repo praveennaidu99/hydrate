@@ -3,156 +3,147 @@
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
     android:background="@drawable/widget_bg"
-    android:padding="16dp">
+    android:padding="12dp">
 
-    <!-- Header Row: Icon + Brand + Badge -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- Left Side: 3D Liquid Water Sphere (Liquid Orb) -->
+    <FrameLayout
+        android:id="@+id/widget_sphere_container"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="12dp">
+
+        <ImageView
+            android:id="@+id/widget_sphere_image"
+            android:layout_width="92dp"
+            android:layout_height="92dp"
+            android:contentDescription="@string/app_name" />
+    </FrameLayout>
+
+    <!-- Right Side: Stats & In-Place Quick Add Action Buttons -->
+    <LinearLayout
+        android:id="@+id/widget_info_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
         android:gravity="center_vertical">
 
-        <!-- App Icon with Circle Tile -->
-        <FrameLayout
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="@drawable/widget_icon_bg">
-
-            <ImageView
-                android:layout_width="18dp"
-                android:layout_height="18dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_water_drop"
-                android:contentDescription="@string/app_name" />
-        </FrameLayout>
-
-        <!-- Brand Title & Subtitle -->
+        <!-- Header: Title + Subtitle -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="10dp"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/widget_title"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="@string/app_name"
                 android:textColor="#F0F6FC"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/widget_subtitle"
+                android:id="@+id/widget_status_badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Daily Hydration"
-                android:textColor="#8899A6"
-                android:textSize="11sp" />
+                android:background="@drawable/widget_badge_bg"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="Hydration"
+                android:textColor="#38BDF8"
+                android:textSize="11sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Percentage Pill Badge -->
-        <TextView
-            android:id="@+id/widget_pct"
-            android:layout_width="wrap_content"
+        <!-- Main Intake Metric: e.g. 1,250 / 2,500 ml -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/widget_badge_bg"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:text="0%"
-            android:textColor="#38BDF8"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:gravity="bottom"
+            android:layout_marginTop="4dp">
 
-    <!-- Hero Stats: Large Intake Number + Status -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="bottom"
-        android:layout_marginTop="12dp">
+            <TextView
+                android:id="@+id/widget_intake"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/widget_intake"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0"
-            android:textColor="#FFFFFF"
-            android:textSize="26sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/widget_unit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="ml"
+                android:textColor="#38BDF8"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/widget_unit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginBottom="2dp"
-            android:text="ml"
-            android:textColor="#38BDF8"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/widget_goal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="/ 2,500"
+                android:textColor="#94A3B8"
+                android:textSize="13sp" />
+        </LinearLayout>
 
+        <!-- Status subtitle: e.g. "1,250 ml remaining" -->
         <TextView
             android:id="@+id/widget_status"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="3dp"
-            android:gravity="end"
-            android:text="2,500 ml goal"
+            android:layout_marginTop="2dp"
+            android:text="2,500 ml remaining"
             android:textColor="#94A3B8"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:singleLine="true" />
-    </LinearLayout>
 
-    <!-- Smooth Rounded Progress Bar -->
-    <ProgressBar
-        android:id="@+id/widget_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="9dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="12dp"
-        android:max="100"
-        android:progress="0"
-        android:progressDrawable="@drawable/widget_progress" />
+        <!-- In-Place Quick Add Buttons (DO NOT OPEN APP) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
-    <!-- Action Buttons Row -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+            <Button
+                android:id="@+id/widget_btn_250"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/widget_btn_bg"
+                android:text="+250 ml"
+                android:textColor="#38BDF8"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textAllCaps="false" />
 
-        <Button
-            android:id="@+id/widget_btn_250"
-            android:layout_width="0dp"
-            android:layout_height="38dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="6dp"
-            android:background="@drawable/widget_btn_bg"
-            android:text="+250 ml"
-            android:textColor="#38BDF8"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:textAllCaps="false" />
+            <Button
+                android:id="@+id/widget_btn_500"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/widget_btn_bg"
+                android:text="+500 ml"
+                android:textColor="#38BDF8"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textAllCaps="false" />
+        </LinearLayout>
 
-        <Button
-            android:id="@+id/widget_btn_500"
-            android:layout_width="0dp"
-            android:layout_height="38dp"
-            android:layout_weight="1"
-            android:layout_marginStart="6dp"
-            android:background="@drawable/widget_btn_bg"
-            android:text="+500 ml"
-            android:textColor="#38BDF8"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:textAllCaps="false" />
     </LinearLayout>
 
 </LinearLayout>

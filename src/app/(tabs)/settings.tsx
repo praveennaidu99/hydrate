@@ -284,113 +284,142 @@ export default function Settings() {
                 </View>
               </View>
 
-              {/* Live Visual Widget Preview */}
+              {/* Live Visual Widget Preview: Left Water Sphere + Right Stats & Actions */}
               <View
                 style={{
                   backgroundColor: '#081522',
                   borderRadius: 20,
-                  padding: 16,
+                  padding: 14,
                   marginTop: 14,
                   borderWidth: 1.5,
                   borderColor: '#1E3852',
+                  flexDirection: 'row',
+                  alignItems: 'center',
                 }}
               >
-                {/* Header */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 999,
-                        backgroundColor: '#0F2D47',
-                        borderWidth: 1,
-                        borderColor: '#1A4D78',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Ionicons name="water" size={18} color="#38BDF8" />
-                    </View>
-                    <View>
-                      <Text variant="strong" style={{ color: '#F0F6FC' }}>
-                        Hydrate
-                      </Text>
-                      <Text variant="caption" tone="faint" style={{ fontSize: 11, color: '#8899A6' }}>
-                        Daily Hydration
-                      </Text>
-                    </View>
-                  </View>
-
+                {/* Left Side: 3D Liquid Water Sphere */}
+                <View
+                  style={{
+                    width: 86,
+                    height: 86,
+                    borderRadius: 999,
+                    backgroundColor: '#071522',
+                    borderWidth: 2,
+                    borderColor: '#2B5E87',
+                    overflow: 'hidden',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginRight: 14,
+                  }}
+                >
+                  {/* Water Fill */}
                   <View
                     style={{
-                      backgroundColor: '#0C2D47',
-                      borderRadius: 999,
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      borderWidth: 1,
-                      borderColor: '#1D5682',
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: '65%',
+                      backgroundColor: '#0284C7',
+                      borderTopLeftRadius: 12,
+                      borderTopRightRadius: 12,
                     }}
                   >
-                    <Text variant="caption" style={{ color: '#38BDF8', fontFamily: F.bold }}>
-                      65%
-                    </Text>
+                    {/* Wave Crest Surface Highlight */}
+                    <View style={{ height: 3, backgroundColor: '#BAE6FD' }} />
                   </View>
-                </View>
 
-                {/* Hero Stats */}
-                <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                    <Text variant="title" style={{ color: '#FFFFFF', fontSize: 24, fontFamily: F.bold }}>
-                      1,625
-                    </Text>
-                    <Text variant="caption" style={{ color: '#38BDF8', fontFamily: F.bold, marginLeft: 4 }}>
-                      {s.unit}
-                    </Text>
-                  </View>
-                  <Text variant="caption" tone="faint" style={{ color: '#94A3B8', fontSize: 12 }}>
-                    875 {s.unit} to {formatVolume(s.goalMl, s.unit)} goal
+                  {/* 3D Glass Specular Reflection Highlight */}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      left: 12,
+                      width: 24,
+                      height: 14,
+                      borderRadius: 999,
+                      backgroundColor: 'rgba(255,255,255,0.35)',
+                      transform: [{ rotate: '-25deg' }],
+                    }}
+                  />
+
+                  {/* Percentage in center with drop shadow */}
+                  <Text variant="strong" style={{ color: '#FFFFFF', fontSize: 18, fontFamily: F.bold, textShadowColor: 'rgba(0,0,0,0.8)', textShadowRadius: 4 }}>
+                    65%
                   </Text>
                 </View>
 
-                {/* Progress bar */}
-                <View style={{ marginTop: 8 }}>
-                  <View style={{ height: 9, borderRadius: 999, backgroundColor: '#122333', overflow: 'hidden' }}>
-                    <View style={{ height: '100%', width: '65%', backgroundColor: '#38BDF8', borderRadius: 999 }} />
+                {/* Right Side: Header + Metric + Pill Buttons */}
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text variant="strong" style={{ color: '#F0F6FC', fontSize: 15 }}>
+                      Hydrate
+                    </Text>
+                    <View
+                      style={{
+                        backgroundColor: '#0C2D47',
+                        borderRadius: 999,
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        borderWidth: 1,
+                        borderColor: '#1D5682',
+                      }}
+                    >
+                      <Text variant="caption" style={{ color: '#38BDF8', fontSize: 10, fontFamily: F.bold }}>
+                        Daily Target
+                      </Text>
+                    </View>
                   </View>
-                </View>
 
-                {/* Quick Add Pills */}
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: '#112A40',
-                      paddingVertical: 8,
-                      borderRadius: 999,
-                      alignItems: 'center',
-                      borderWidth: 1,
-                      borderColor: '#214A6F',
-                    }}
-                  >
-                    <Text variant="caption" style={{ color: '#38BDF8', fontFamily: F.bold }}>
-                      +{formatVolume(s.quickAmounts[1] ?? 250, s.unit)}
+                  {/* Intake / Goal */}
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 4 }}>
+                    <Text variant="strong" style={{ color: '#FFFFFF', fontSize: 20, fontFamily: F.bold }}>
+                      1,625
+                    </Text>
+                    <Text variant="caption" style={{ color: '#38BDF8', fontFamily: F.bold, marginLeft: 3 }}>
+                      {s.unit}
+                    </Text>
+                    <Text variant="caption" tone="faint" style={{ color: '#94A3B8', marginLeft: 3 }}>
+                      / {formatVolume(s.goalMl, s.unit)}
                     </Text>
                   </View>
-                  <View
-                    style={{
-                      flex: 1,
-                      backgroundColor: '#112A40',
-                      paddingVertical: 8,
-                      borderRadius: 999,
-                      alignItems: 'center',
-                      borderWidth: 1,
-                      borderColor: '#214A6F',
-                    }}
-                  >
-                    <Text variant="caption" style={{ color: '#38BDF8', fontFamily: F.bold }}>
-                      +{formatVolume(s.quickAmounts[2] ?? 500, s.unit)}
-                    </Text>
+
+                  <Text variant="caption" tone="faint" style={{ color: '#94A3B8', fontSize: 11, marginTop: 1 }}>
+                    875 {s.unit} remaining
+                  </Text>
+
+                  {/* Quick Add Pills (Instant in-place update) */}
+                  <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#112A40',
+                        paddingVertical: 6,
+                        borderRadius: 999,
+                        alignItems: 'center',
+                        borderWidth: 1,
+                        borderColor: '#214A6F',
+                      }}
+                    >
+                      <Text variant="caption" style={{ color: '#38BDF8', fontFamily: F.bold, fontSize: 11 }}>
+                        +{formatVolume(s.quickAmounts[1] ?? 250, s.unit)}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#112A40',
+                        paddingVertical: 6,
+                        borderRadius: 999,
+                        alignItems: 'center',
+                        borderWidth: 1,
+                        borderColor: '#214A6F',
+                      }}
+                    >
+                      <Text variant="caption" style={{ color: '#38BDF8', fontFamily: F.bold, fontSize: 11 }}>
+                        +{formatVolume(s.quickAmounts[2] ?? 500, s.unit)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -501,7 +530,7 @@ export default function Settings() {
           </Animated.View>
 
           <Text variant="caption" tone="faint" style={{ textAlign: 'center', marginTop: 28 }}>
-            Hydrate v1.2.0 (Build 4) · {pending} notifications scheduled
+            Hydrate v1.3.0 (Build 5) · {pending} notifications scheduled
           </Text>
         </>
       )}

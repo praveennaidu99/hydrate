@@ -17,7 +17,7 @@ import * as Linking from 'expo-linking';
 import { emitDataChanged, onDataChanged } from '../events';
 import { handleResponse, refreshGoalChecks, scheduleAll, setupNotifications } from '../notifications';
 import { getFirstDay, loadSettings } from '../storage';
-import { handleWidgetUrl, syncWidgetData } from '../widgets/widget-sync';
+import { handleWidgetUrl, syncPendingWidgetAdds, syncWidgetData } from '../widgets/widget-sync';
 import { ThemeProvider, useTheme } from '../theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -80,6 +80,7 @@ function useNotificationLifecycle() {
       // Re-create automatic notifications so "behind on water" warnings use today's numbers.
       const settings = await loadSettings();
       if (settings.enabled) await scheduleAll(settings);
+      await syncPendingWidgetAdds();
       await syncWidgetData();
       const initialUrl = await Linking.getInitialURL();
       if (initialUrl) await handleWidgetUrl(initialUrl);
@@ -94,6 +95,7 @@ function useNotificationLifecycle() {
     });
     const appState = AppState.addEventListener('change', (st) => {
       if (st === 'active') {
+        syncPendingWidgetAdds();
         refreshGoalChecks();
         syncWidgetData();
         emitDataChanged(); // picks up water logged from notification buttons, or a new day

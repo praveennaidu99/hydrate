@@ -10,5 +10,6 @@ export const AppState = {
 export const NativeModules = {
   HydrationWidgetModule: {
     updateWidget: () => {},
+    getPendingWidgetAdds: async () => 0,
   },
 };

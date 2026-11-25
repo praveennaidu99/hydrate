@@ -60,6 +60,26 @@ export async function syncWidgetData(
   return snapshot;
 }
 
+/**
+ * Checks if the user tapped quick-add buttons on the Home Screen widget
+ * while the app was closed/in background, and imports that water into AsyncStorage.
+ */
+export async function syncPendingWidgetAdds(): Promise<number> {
+  if (Platform.OS === 'android' && NativeModules?.HydrationWidgetModule?.getPendingWidgetAdds) {
+    try {
+      const added = await NativeModules.HydrationWidgetModule.getPendingWidgetAdds();
+      if (typeof added === 'number' && added > 0) {
+        await addIntake(added);
+        await refreshGoalChecks();
+        emitDataChanged();
+        await syncWidgetData();
+        return added;
+      }
+    } catch {}
+  }
+  return 0;
+}
+
 let lastProcessedTime = 0;
 let lastProcessedUrl = '';
 
