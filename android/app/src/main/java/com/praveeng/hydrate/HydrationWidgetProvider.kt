@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.RemoteViews
+import java.text.NumberFormat
+import java.util.Locale
 
 class HydrationWidgetProvider : AppWidgetProvider() {
 
@@ -26,12 +28,26 @@ class HydrationWidgetProvider : AppWidgetProvider() {
             val goalMl = prefs.getInt("goalMl", 2500)
             val unit = prefs.getString("unit", "ml") ?: "ml"
             val pct = if (goalMl > 0) Math.min(150, (intakeMl * 100 / goalMl)) else 0
+            val remaining = Math.max(0, goalMl - intakeMl)
+
+            val numberFormat = NumberFormat.getNumberInstance(Locale.US)
+            val formattedIntake = numberFormat.format(intakeMl)
+            val formattedGoal = numberFormat.format(goalMl)
+            val formattedRemaining = numberFormat.format(remaining)
 
             val views = RemoteViews(context.packageName, R.layout.hydration_widget)
 
             // Update text & progress
-            views.setTextViewText(R.id.widget_pct, "$pct%")
-            views.setTextViewText(R.id.widget_intake, "$intakeMl / $goalMl $unit")
+            views.setTextViewText(R.id.widget_pct, if (pct >= 100) "$pct% ✨" else "$pct%")
+            views.setTextViewText(R.id.widget_intake, formattedIntake)
+            views.setTextViewText(R.id.widget_unit, unit)
+
+            val statusText = if (intakeMl >= goalMl) {
+                "Goal Reached! 🏆"
+            } else {
+                "$formattedRemaining $unit to $formattedGoal goal"
+            }
+            views.setTextViewText(R.id.widget_status, statusText)
             views.setProgressBar(R.id.widget_progress, 100, Math.min(100, pct), false)
 
             // Open app on root click

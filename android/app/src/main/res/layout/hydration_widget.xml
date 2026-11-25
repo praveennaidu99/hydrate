@@ -7,91 +7,150 @@
     android:background="@drawable/widget_bg"
     android:padding="16dp">
 
-    <!-- Header: App Icon + App Name + Percentage -->
+    <!-- Header Row: Icon + Brand + Badge -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:src="@mipmap/ic_launcher"
-            android:contentDescription="@string/app_name" />
+        <!-- App Icon with Circle Tile -->
+        <FrameLayout
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/widget_icon_bg">
 
-        <TextView
-            android:id="@+id/widget_title"
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_water_drop"
+                android:contentDescription="@string/app_name" />
+        </FrameLayout>
+
+        <!-- Brand Title & Subtitle -->
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="@string/app_name"
-            android:textColor="#EAF2FA"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:layout_marginStart="10dp"
+            android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/widget_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="#F0F6FC"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Daily Hydration"
+                android:textColor="#8899A6"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Percentage Pill Badge -->
         <TextView
             android:id="@+id/widget_pct"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/widget_badge_bg"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
             android:text="0%"
             android:textColor="#38BDF8"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Progress Bar -->
-    <ProgressBar
-        android:id="@+id/widget_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="6dp"
-        android:max="100"
-        android:progress="0"
-        android:progressDrawable="@drawable/widget_progress" />
-
-    <!-- Current Intake / Daily Goal -->
-    <TextView
-        android:id="@+id/widget_intake"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0 / 2500 ml"
-        android:textColor="#94A3B8"
-        android:textSize="12sp" />
-
-    <!-- Quick Add Action Buttons -->
+    <!-- Hero Stats: Large Intake Number + Status -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:gravity="bottom"
         android:layout_marginTop="12dp">
+
+        <TextView
+            android:id="@+id/widget_intake"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_unit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginBottom="2dp"
+            android:text="ml"
+            android:textColor="#38BDF8"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="3dp"
+            android:gravity="end"
+            android:text="2,500 ml goal"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"
+            android:singleLine="true" />
+    </LinearLayout>
+
+    <!-- Smooth Rounded Progress Bar -->
+    <ProgressBar
+        android:id="@+id/widget_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="9dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="12dp"
+        android:max="100"
+        android:progress="0"
+        android:progressDrawable="@drawable/widget_progress" />
+
+    <!-- Action Buttons Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/widget_btn_250"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="38dp"
             android:layout_weight="1"
             android:layout_marginEnd="6dp"
             android:background="@drawable/widget_btn_bg"
             android:text="+250 ml"
             android:textColor="#38BDF8"
-            android:textSize="12sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:textAllCaps="false" />
 
         <Button
             android:id="@+id/widget_btn_500"
             android:layout_width="0dp"
-            android:layout_height="36dp"
+            android:layout_height="38dp"
             android:layout_weight="1"
             android:layout_marginStart="6dp"
             android:background="@drawable/widget_btn_bg"
             android:text="+500 ml"
             android:textColor="#38BDF8"
-            android:textSize="12sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:textAllCaps="false" />
     </LinearLayout>
