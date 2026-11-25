@@ -40,6 +40,6 @@ scratch/
 
 # generated native folders
 /ios
-/android
+# /android is tracked so local Gradle builds and native AppWidgets are versioned
 .neon
 *.apk
